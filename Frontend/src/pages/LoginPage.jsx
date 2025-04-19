@@ -146,11 +146,11 @@ const LoginForm = () => {
         
       </div>
 
-      <div className="mt-2 text-right">
+      {/* <div className="mt-2 text-right">
         <Link to="/forgot-password" className="text-sm  hover:underline">
           Forgot Password?
         </Link>
-      </div>
+      </div> */}
 
       <Button
         type="submit"
