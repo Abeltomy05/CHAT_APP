@@ -1,7 +1,7 @@
 import React, { useState,useRef,useEffect } from 'react'
 import { useChatStore } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { X, Phone, Video, MoreVertical, Trash, Ban, UserCheck, AlertTriangle,Users, LogOut } from 'lucide-react';
+import { X, MoreVertical, Trash, Ban, UserCheck, AlertTriangle,Users, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { axiosIntance } from '../../lib/axios';
@@ -10,15 +10,19 @@ import { axiosIntance } from '../../lib/axios';
 const ChatHeader = () => {
     const { selectedUser, setSelectedUser } = useChatStore();
     const { onlineUsers, authUser, socket, blockedUsers, setBlockedUsers } = useAuthStore();
+
     const navigate = useNavigate();
+
     const [showMenu, setShowMenu] = useState(false);
     const [showBlockModal, setShowBlockModal] = useState(false);
     const [showLeaveGroupModal, setShowLeaveGroupModal] = useState(false);
     const [showGroupMembers, setShowGroupMembers] = useState(false);
+
     const menuRef = useRef(null);
     const modalRef = useRef(null);
     const leaveGroupModalRef = useRef(null);
     const membersRef = useRef(null);
+
     const [isBlocked, setIsBlocked] = useState(false);
     const [fullGroupData, setFullGroupData] = useState(null);
   
@@ -191,51 +195,49 @@ const ChatHeader = () => {
 
     return (
       <>
-        <div className="p-2.5 border-b border-base-300">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Avatar */}
-              <div className="avatar">
-                <div className="size-10 rounded-full relative">
-                  {selectedUser.isGroup ? (
-                    selectedUser.groupImage ? (
-                      <img 
-                        src={selectedUser.groupImage} 
-                        alt={selectedUser.name}
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          // Fallback to default group image
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                        {selectedUser.name?.charAt(0) || "G"}
-                      </div>
-                    )
-                  ) : (
+         <div className="p-2.5 border-b border-base-300">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Avatar */}
+            <div className="avatar">
+              <div className="size-10 rounded-full relative">
+                {selectedUser.isGroup ? (
+                  selectedUser.groupImage ? (
                     <img 
-                      src={selectedUser.profilePic || "/avatar.png"} 
-                      alt={displayName}
+                      src={selectedUser.groupImage} 
+                      alt={selectedUser.name}
                       onError={(e) => {
                         e.target.onerror = null;
-                        // e.target.src = "/avatar.png";
                       }}
                     />
-                  )}
-                </div>
+                  ) : (
+                    <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+                      {selectedUser.name?.charAt(0) || "G"}
+                    </div>
+                  )
+                ) : (
+                  <img 
+                    src={selectedUser.profilePic || "/avatar.png"} 
+                    alt={displayName}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                    }}
+                  />
+                )}
               </div>
+            </div>
     
               {/* User info */}
               <div>
-                <h3 className="font-medium">{displayName}</h3>
-                <p className="text-sm text-base-content/70">
-                  {statusText}
-                </p>
-              </div>
+              <h3 className="font-medium">{displayName}</h3>
+              <p className="text-sm text-base-content/70">
+                {statusText}
+              </p>
             </div>
+          </div>
 
             {/* Call actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {/* {!selectedUser.isGroup && (
                 <>
                   <button 
@@ -259,7 +261,7 @@ const ChatHeader = () => {
               )} */}
 
             {selectedUser.isGroup && (
-                <div className="relative" ref={membersRef}>
+              <div className="relative" ref={membersRef}>
                 <button 
                   onClick={toggleGroupMembers}
                   className="p-2 rounded-full text-indigo-500 hover:bg-indigo-50"
@@ -287,171 +289,174 @@ const ChatHeader = () => {
                                   e.target.onerror = null;
                                   e.target.src = "/avatar.png";
                                 }}
-                              />
+                                />
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{member.fullName}</p>
+                                <p className="text-xs text-base-content/70">
+                                  {onlineUsers.includes(member._id) ? "Online" : "Offline"}
+                                  {member._id === groupAdmin  && " • Admin"}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{member.fullName}</p>
-                            <p className="text-xs text-base-content/70">
-                              {onlineUsers.includes(member._id) ? "Online" : "Offline"}
-                              {member._id === groupAdmin  && " • Admin"}
-                            </p>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-              )}
               
               {/* Menu button (three dots) */}
               <div className="relative" ref={menuRef}>
-                <button 
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="p-2 rounded-full hover:bg-base-200"
-                  title="More options"
-                >
-                  <MoreVertical size={20} />
-                </button>
+              <button 
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 rounded-full hover:bg-base-200"
+                title="More options"
+              >
+                <MoreVertical size={20} />
+              </button>
                 
                 {/* Dropdown menu */}
                 {showMenu && (
-                  <div className="absolute right-0 mt-3 w-48 rounded-md bg-base-300 shadow-lg z-10 border border-base-100">
-                    <div className="py-1">
-                      <button
-                        onClick={handleClearChat}
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left hover:bg-base-200"
-                      >
-                        <Trash size={16} />
-                        Delete for me
-                      </button>
-                      
+                <div className="absolute right-0 mt-3 w-48 rounded-md bg-base-300 shadow-lg z-10 border border-base-100">
+                  <div className="py-1">
+                    <button
+                      onClick={handleClearChat}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left hover:bg-base-200"
+                    >
+                      <Trash size={16} />
+                      Delete for me
+                    </button>
+                    
                       {/* Only show block/unblock for individual users */}
                       {!selectedUser.isGroup && isBlocked ? (
-                        <button
-                          onClick={handleUnblockUser}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-green-600 hover:bg-base-200"
-                        >
-                          <UserCheck size={16} />
-                          Unblock user
-                        </button>
-                        ) : !selectedUser.isGroup && (
-                        <button
-                          onClick={openBlockConfirmation}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-base-200"
-                        >
-                          <Ban size={16} />
-                          Block user
-                        </button>
-                      )}
+                      <button
+                        onClick={handleUnblockUser}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-green-600 hover:bg-base-200"
+                      >
+                        <UserCheck size={16} />
+                        Unblock user
+                      </button>
+                      ) : !selectedUser.isGroup && (
+                      <button
+                        onClick={openBlockConfirmation}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-base-200"
+                      >
+                        <Ban size={16} />
+                        Block user
+                      </button>
+                    )}
                        {selectedUser.isGroup &&(
-                        <button
-                          onClick={openLeaveGroupConfirmation}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-base-200"
-                        >
-                          <LogOut size={16} />
-                          Leave group
-                        </button>
-                      )}
-                    </div>
+                      <button
+                        onClick={openLeaveGroupConfirmation}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-base-200"
+                      >
+                        <LogOut size={16} />
+                        Leave group
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
     
               {/* Close button */}
-              <button onClick={() => setSelectedUser(null)}>
-                <X />
+              <button 
+              onClick={() => setSelectedUser(null)}
+              className="hidden sm:block"
+            >
+              <X />
+            </button>
+          </div>
+        </div>
+      </div>
+
+        {/* Block User Confirmation Modal */}
+         {showBlockModal && !selectedUser.isGroup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div 
+            ref={modalRef} 
+            className="bg-base-200 p-6 rounded-lg shadow-lg max-w-md w-full mx-4"
+          >
+            <div className="flex items-center gap-3 mb-4 text-red-500">
+              <AlertTriangle size={24} />
+              <h3 className="text-lg font-medium">Block User</h3>
+            </div>
+            
+            <p className="mb-6">
+              Are you sure you want to block <span className="font-semibold">{selectedUser.fullName}</span>? 
+              This will:
+            </p>
+            
+            <ul className="mb-6 space-y-2 list-disc pl-5">
+              <li>Prevent them from sending you messages</li>
+              <li>Disable voice and video calls</li>
+            </ul>
+            
+            <p className="mb-6 text-sm text-base-content/70">
+              You can unblock them later from your settings (user icon) if you change your mind.
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowBlockModal(false)}
+                className="px-4 py-2 rounded bg-base-300 hover:bg-base-100"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleBlockUser}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Block User
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Block User Confirmation Modal */}
-        {showBlockModal && !selectedUser.isGroup && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div 
-              ref={modalRef} 
-              className="bg-base-200 p-6 rounded-lg shadow-lg max-w-md w-full mx-4"
-            >
-              <div className="flex items-center gap-3 mb-4 text-red-500">
-                <AlertTriangle size={24} />
-                <h3 className="text-lg font-medium">Block User</h3>
-              </div>
-              
-              <p className="mb-6">
-                Are you sure you want to block <span className="font-semibold">{selectedUser.fullName}</span>? 
-                This will:
-              </p>
-              
-              <ul className="mb-6 space-y-2 list-disc pl-5">
-                <li>Prevent them from sending you messages</li>
-                <li>Disable voice and video calls</li>
-              </ul>
-              
-              <p className="mb-6 text-sm text-base-content/70">
-                You can unblock them later from your settings (user icon) if you change your mind.
-              </p>
-              
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setShowBlockModal(false)}
-                  className="px-4 py-2 rounded bg-base-300 hover:bg-base-100"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleBlockUser}
-                  className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
-                >
-                  Block User
-                </button>
-              </div>
+      {showLeaveGroupModal && selectedUser.isGroup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div 
+            ref={leaveGroupModalRef} 
+            className="bg-base-200 p-6 rounded-lg shadow-lg max-w-md w-full mx-4"
+          >
+            <div className="flex items-center gap-3 mb-4 text-red-500">
+              <LogOut size={24} />
+              <h3 className="text-lg font-medium">Leave Group</h3>
+            </div>
+            
+            <p className="mb-6">
+              Are you sure you want to leave <span className="font-semibold">{selectedUser.name}</span>? 
+              This will:
+            </p>
+            
+            <ul className="mb-6 space-y-2 list-disc pl-5">
+              <li>Remove you from the group permanently</li>
+              <li>Delete all your access to previous messages</li>
+              <li>Require a new invitation to rejoin the group</li>
+            </ul>
+            
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowLeaveGroupModal(false)}
+                className="px-4 py-2 rounded bg-base-300 hover:bg-base-100"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleLeaveGroup}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Leave Group
+              </button>
             </div>
           </div>
-        )}
-
-        {showLeaveGroupModal && selectedUser.isGroup && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div 
-              ref={leaveGroupModalRef} 
-              className="bg-base-200 p-6 rounded-lg shadow-lg max-w-md w-full mx-4"
-            >
-              <div className="flex items-center gap-3 mb-4 text-red-500">
-                <LogOut size={24} />
-                <h3 className="text-lg font-medium">Leave Group</h3>
-              </div>
-              
-              <p className="mb-6">
-                Are you sure you want to leave <span className="font-semibold">{selectedUser.name}</span>? 
-                This will:
-              </p>
-              
-              <ul className="mb-6 space-y-2 list-disc pl-5">
-                <li>Remove you from the group permanently</li>
-                <li>Delete all your access to previous messages</li>
-                <li>Require a new invitation to rejoin the group</li>
-              </ul>
-              
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setShowLeaveGroupModal(false)}
-                  className="px-4 py-2 rounded bg-base-300 hover:bg-base-100"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleLeaveGroup}
-                  className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
-                >
-                  Leave Group
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-}
+        </div>
+      )}
+    </>
+  );
+};
 
 export default ChatHeader

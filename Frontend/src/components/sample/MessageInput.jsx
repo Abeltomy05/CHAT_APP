@@ -75,13 +75,14 @@ const MessageInput = () => {
     }
 
     return (
-      <form onSubmit={handleSendMessage} className="px-4 py-3 border-t flex gap-2 items-center">
+      <form onSubmit={handleSendMessage} className="px-2 sm:px-4 py-3 border-t">
+        {/* Image Preview Section */}
         {imagePreview && (
-          <div className="relative w-16 h-16 mb-2">
+          <div className="relative inline-block mb-2">
             <img 
               src={imagePreview} 
               alt="Selected" 
-              className="w-full h-full object-cover rounded-md" 
+              className="w-16 h-16 object-cover rounded-md" 
             />
             <button 
               type="button"
@@ -93,36 +94,40 @@ const MessageInput = () => {
           </div>
         )}
         
-        <input 
-          type="file" 
-          onChange={handleImageChange} 
-          ref={fileInputRef} 
-          className="hidden" 
-          accept="image/*"
-        />
-        
-        <button 
-          type="button" 
-          onClick={() => fileInputRef.current?.click()} 
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <Image size={20} />
-        </button>
-        
-        <input 
-          type="text" 
-          value={text} 
-          onChange={handleMessageChange} 
-          placeholder={`Message ${selectedUser?.username || ''}...`}
-          className="w-full p-2 rounded-full bg-gray-100 dark:bg-gray-800 focus:outline-none"
-        />
-        
-        <button 
-          type="submit" 
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <Send size={20} />
-        </button>
+        {/* Input Section */}
+        <div className="flex gap-2 items-center">
+          <input 
+            type="file" 
+            onChange={handleImageChange} 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*"
+          />
+          
+          <button 
+            type="button" 
+            onClick={() => fileInputRef.current?.click()} 
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
+          >
+            <Image size={20} />
+          </button>
+          
+          <input 
+            type="text" 
+            value={text} 
+            onChange={handleMessageChange} 
+            placeholder={`Message ${selectedUser?.fullName || selectedUser?.name || ''}...`}
+            className="w-full p-2 rounded-full bg-gray-100 dark:bg-gray-800 focus:outline-none"
+          />
+          
+          <button 
+            type="submit" 
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
+            disabled={!text.trim() && !imagePreview}
+          >
+            <Send size={20} className={!text.trim() && !imagePreview ? "text-gray-400" : ""} />
+          </button>
+        </div>
       </form>
     );
 }

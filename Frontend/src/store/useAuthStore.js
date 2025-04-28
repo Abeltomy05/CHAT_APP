@@ -19,11 +19,15 @@ export const useAuthStore = create((set,get)=>({
   incomingCall: null,
   authProvider: null,
 
+  setAuthProvider: (provider) => set({ authProvider: provider }),
 
   checkAuth:async()=>{
     try{
       const res = await axiosIntance.get('/auth/check');
-      set({authUser:res.data});
+      set({
+        authUser:res.data,
+        authProvider: res.data.googleId ? 'google' : 'email'
+      });
       get().connectSocket();
     }catch(error){
       if (error.response && error.response.status === 401) {
@@ -51,30 +55,6 @@ export const useAuthStore = create((set,get)=>({
     }
   },
 
-  googleAuth: async (userData) => {
-    set({isLoggingIn: true})
-    try {
-      console.log("Sending Google auth data:", userData);
-
-      const res = await axiosIntance.post("/auth/google", {
-        email: userData.email,
-        fullName: userData.name,
-        picture: userData.picture,
-        googleId: userData.sub
-      });
-      
-      console.log("Google auth response:", res.data);
-      set({authUser: res.data, authProvider: 'google'});
-      toast.success("Google authentication successful");
-      get().connectSocket();
-    } catch(error) {
-      console.error("Google auth error:", error.response?.data || error.message);
-      toast.error(error.response?.data?.message || "Google authentication failed");
-    } finally {
-      set({isLoggingIn: false});
-    }
-  },
-
   login:async(data)=>{
     set({isLoggingIn: true})
        try{
@@ -90,28 +70,15 @@ export const useAuthStore = create((set,get)=>({
     }
   },
 
-  logout:async(auth0Logout = null)=>{
+  logout: async()=>{
     try{
       get().disconnectSocket();
-
      await axiosIntance.post('/auth/logout');
      useChatStore.getState().resetChat();
-
-     set({authUser: null, authProvider: null});
+     set({authUser: null});
      toast.success("Logged out successfully");
-
-     if (get().authProvider === 'google' && auth0Logout) {
-      setTimeout(() => {
-        auth0Logout({
-          logoutParams: {
-            returnTo: window.location.origin,
-            federated: true
-          }
-        });
-      }, 300);
-    }
     }catch(error){
-      set({authUser: null, authProvider: null});
+      set({authUser: null});
       toast.error(error.response?.data?.message || "An error occurred during logout");
     }
   },

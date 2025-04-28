@@ -4,7 +4,6 @@ import { Link,useNavigate  } from "react-router-dom"
 import { useAuthStore } from "../store/useAuthStore"
 import toast from "react-hot-toast"
 import Navbar from "../components/sample/navbar"
-import { useAuth0 } from "@auth0/auth0-react";
 
 // Input component
 const Input = ({ type, name, placeholder, value, onChange, className, children }) => (
@@ -59,19 +58,6 @@ const LoginForm = () => {
   const navigate = useNavigate()
 
   const { login, isLoggingIn,googleAuth, authUser } = useAuthStore()
-  const { user, isAuthenticated, isLoading, loginWithRedirect, logout } = useAuth0();
-
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // User has successfully authenticated with Google via Auth0
-      googleAuth({
-        email: user.email,
-        name: user.name,
-        picture: user.picture,
-        sub: user.sub
-      });
-    }
-  }, [isAuthenticated, user, googleAuth]);
 
   useEffect(() => {
     if (authUser) {
@@ -105,12 +91,11 @@ const LoginForm = () => {
   }
 
   const handleGoogleLogin = () => {
-    loginWithRedirect({
-      connection: 'google-oauth2',
-      redirectUri: window.location.origin,
-      appState: { returnTo: '/' },
-      prompt: 'select_account'
-    });
+    const baseURL = import.meta.env.MODE === "development" 
+                      ? "http://localhost:3000/api" 
+                      : "/api";
+
+  window.location.href = `${baseURL}/auth/google`;
   }
 
   return (
@@ -184,8 +169,8 @@ const LoginForm = () => {
       <Button
          type="button"
          className="w-full mt-4 flex items-center justify-center  border "
-         onClick={(e) => handleGoogleLogin()}
-         disabled={isLoading || isLoggingIn}
+         onClick={handleGoogleLogin}
+         disabled={isLoggingIn}
        >
          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
            <path
@@ -206,7 +191,7 @@ const LoginForm = () => {
            />
            <path fill="none" d="M1 1h22v22H1z" />
          </svg>
-         <span className="font-medium">Sign up with Google</span>
+         <span className="font-medium">Sign in with Google</span>
       </Button>
     </form>
   )
