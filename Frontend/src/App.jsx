@@ -15,12 +15,13 @@ import IncomingCallAlert from './components/sample/incomingCallAlert'
 
 function App() {
     const {authUser,checkAuth, isCheckingAuth, onlineUsers, incomingCall, acceptCall, declineCall}  = useAuthStore();
-    const {theme} = useThemeStore()
+    const {theme,initializeTheme} = useThemeStore()
 
     console.log("onlineUsers",onlineUsers)
     useEffect(()=>{
         checkAuth()
-    },[checkAuth]);
+        initializeTheme();
+    },[checkAuth,initializeTheme]);
 
  return(
   <>
