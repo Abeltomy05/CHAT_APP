@@ -100,6 +100,51 @@ const filteredGroups = groups.filter(group => group.name.toLowerCase().includes(
                     </button>
                 </div>
 
+                {activeTab === 'contacts' && (
+                    <div className="mt-2 flex justify-center lg:justify-start items-center gap-2 text-xs">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={showOnlineOnly}
+                            onChange={(e) => setShowOnlineOnly(e.target.checked)}
+                            className="checkbox checkbox-xs"
+                        />
+                        <span>Show online only</span>
+                        </label>
+                        <span className="text-zinc-500">({onlineUsers.length - 1} online)</span>
+                    </div>
+                    )}
+
+                    {activeTab === 'groups' && (
+                    <div className="mt-2 flex justify-center lg:justify-start">
+                        <button
+                        onClick={() => setShowCreateGroupModal(true)}
+                        className="text-xs flex items-center gap-1 bg-base-200 hover:bg-base-300 p-1.5 px-3 rounded-md transition-colors"
+                        >
+                        <UserPlus className="size-3.5" />
+                        Create New Group
+                        </button>
+                    </div>
+                    )}
+              
+              <div className="px-2 my-3">
+                  <div className="relative">
+                      <input
+                          type="text"
+                          placeholder="Search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full px-3 lg:px-4 py-1.5 lg:py-2 text-sm lg:text-base
+                              bg-base-200 rounded-lg pr-8 lg:pr-10 
+                              focus:outline-none focus:ring-2 
+                              focus:ring-base-300 transition-all"
+                      />
+                      <Search className="absolute right-2 lg:right-3 top-1/2 transform 
+                          -translate-y-1/2 text-zinc-400 
+                          size-4 lg:size-5" />
+                  </div>
+              </div>
+
                 {/* Contacts List */}
                 {activeTab === 'contacts' && (
                     <div ref={listContainerRef} className="overflow-y-auto w-full py-3 flex-grow scrollbar-thin">
@@ -183,6 +228,13 @@ const filteredGroups = groups.filter(group => group.name.toLowerCase().includes(
                     </div>
                 )}
             </div>
+                     {/* Create Group Modal */}
+                    {showCreateGroupModal && (
+                        <CreateGroupModal 
+                            onClose={() => setShowCreateGroupModal(false)} 
+                            users={users}
+                        />
+                    )}
         </aside>
     );
 }
