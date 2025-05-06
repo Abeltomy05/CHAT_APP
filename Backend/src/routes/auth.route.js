@@ -1,6 +1,6 @@
 import express from "express";
 import passport from 'passport';
-import { login, logout, signup, updateProfile, checkAuth, googleLogin } from "../controllers/auth.controller.js";
+import { login, logout, signup, updateProfile, checkAuth, googleLogin} from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { generateToken } from "../lib/utils.js"; 
 

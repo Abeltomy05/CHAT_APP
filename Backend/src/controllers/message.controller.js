@@ -366,3 +366,39 @@ export const leaveGroup = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const latestMessageUser = async(req,res)=>{
+  try {
+      const userId = req.params.userId;
+      const authUserId = req.user._id;
+      
+      // Find most recent message between the two users
+      const latestMessage = await Message.findOne({
+        $or: [
+          { senderId: authUserId, receiverId: userId },
+          { senderId: userId, receiverId: authUserId }
+        ]
+      })
+      .sort({ createdAt: -1 })
+      .limit(1);
+      
+      res.status(200).json(latestMessage || null);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching latest message" });
+    }
+}
+
+export const latestMessageUserGroup = async(req,res)=>{
+  try {
+      const groupId = req.params.groupId;
+      
+      // Find most recent message in the group
+      const latestMessage = await GroupMessage.findOne({ groupId })
+        .sort({ createdAt: -1 })
+        .limit(1);
+      
+      res.status(200).json(latestMessage || null);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching latest group message" });
+    }
+}

@@ -19,22 +19,42 @@ export const useChatStore = create((set,get)=>({
     typingTimeout: null,
     loading: false,
     error: null,
+    lastMessageTimestamps: {},
    
 
 
     getUsers: async() =>{
-        set({isUsersLoading: true});
-        try{
-          const res = await axiosIntance.get("/message/users");
-          set({users:res.data});
-        }catch(error){
-            toast.error(error.response.data.message);
-        }finally{
-            set({isUsersLoading:false})
-        }
-    },
+      set({isUsersLoading: true});
+      try{
+        const res = await axiosIntance.get("/message/users");
+        set({users:res.data});
+        
+        // Fetch latest message timestamp for each user if not already fetched
+        res.data.forEach(async (user) => {
+          if (!get().lastMessageTimestamps[user._id]) {
+            try {
+              const messagesRes = await axiosIntance.get(`/message/latest/${user._id}`);
+              if (messagesRes.data && messagesRes.data.createdAt) {
+                set(state => ({
+                  lastMessageTimestamps: {
+                    ...state.lastMessageTimestamps,
+                    [user._id]: new Date(messagesRes.data.createdAt).getTime()
+                  }
+                }));
+              }
+            } catch (error) {
+              // Silent fail - we'll just sort them at the bottom
+            }
+          }
+        });
+      }catch(error){
+          toast.error(error.response.data.message);
+      }finally{
+          set({isUsersLoading:false})
+      }
+  },
 
-    getGroups: async() => {
+ getGroups: async() => {
       set({isGroupsLoading: true});
       try{
         const res = await axiosIntance.get("message/groups");
@@ -46,6 +66,26 @@ export const useChatStore = create((set,get)=>({
             socket.emit("joinGroup", group._id);
           });
         }
+        
+        // Fetch latest message timestamp for each group if not already fetched
+        res.data.forEach(async (group) => {
+          if (!get().lastMessageTimestamps[group._id]) {
+            try {
+              const messagesRes = await axiosIntance.get(`/message/getLatestGroupMessage/${group._id}`);
+              if (messagesRes.data && messagesRes.data.createdAt) {
+                set(state => ({
+                  lastMessageTimestamps: {
+                    ...state.lastMessageTimestamps,
+                    [group._id]: new Date(messagesRes.data.createdAt).getTime()
+                  }
+                }));
+              }
+            } catch (error) {
+              // Silent fail - we'll just sort them at the bottom
+            }
+          }
+        });
+        
         return res.data;
       }catch(error){
           toast.error(error.response?.data?.message || "Failed to fetch groups");
@@ -123,7 +163,7 @@ resetChat: () => {
     });
   }, 
 
-    getMessages: async(userId) => {
+  getMessages: async(userId) => {
       if (!userId) return;
       
       const { selectedUser } = get();
@@ -138,6 +178,15 @@ resetChat: () => {
               
           const res = await axiosIntance.get(endpoint);
           set({messages: res.data});
+          if (res.data.length > 0) {
+            const latestMessage = res.data[res.data.length - 1];
+            set(state => ({
+              lastMessageTimestamps: {
+                ...state.lastMessageTimestamps,
+                [userId]: new Date(latestMessage.createdAt).getTime()
+              }
+            }));
+          }
       } catch(error) {
           toast.error(error.response?.data?.message || "Failed to fetch messages");
       } finally {
@@ -174,7 +223,11 @@ resetChat: () => {
           set(state => ({
             messages: [...state.messages, response.data],
             loading: false,
-            error: null
+            error: null,
+            lastMessageTimestamps: {
+              ...state.lastMessageTimestamps,
+              [selectedUser._id]: new Date(response.data.createdAt).getTime()
+            }
           }));
           
           return response.data;
@@ -184,44 +237,63 @@ resetChat: () => {
         }
     },
 
-
     subscribeToMessages: () => {
       const { selectedUser } = get();
       if (!selectedUser) return;
-
+    
       const socket = useAuthStore.getState().socket;
       if (!socket) return;
-
+    
       if (selectedUser.isGroup) {
         socket.emit("joinGroup", selectedUser._id);
       }
-
+    
       // Handle both direct and group messages
       socket.on('newMessage', (newMessage) => {
-          const isGroup = selectedUser.isGroup;
-          
-          if (isGroup) {
-              // For group messages, check if it's for the current group
-              if (newMessage.groupId === selectedUser._id) {
-                  set({
-                      messages: [...get().messages, newMessage],
-                      isTyping: false 
-                  });
-              }
-          } else {
-              // For direct messages, check if it's from the selected user
-              if (newMessage.senderId === selectedUser._id) {
-                  set({
-                      messages: [...get().messages, newMessage],
-                      isTyping: false 
-                  });
-              }
+        const isGroup = selectedUser.isGroup;
+        
+        // Get the current state to avoid stale references
+        const state = get();
+        
+        if (isGroup) {
+          // For group messages, check if it's for the current group
+          if (newMessage.groupId === selectedUser._id) {
+            set({
+              messages: [...state.messages, newMessage],
+              isTyping: false,
+              lastMessageTimestamps: {
+                ...state.lastMessageTimestamps,
+                [selectedUser._id]: new Date(newMessage.createdAt).getTime()
+              } 
+            });
           }
+        } else {
+          // For direct messages, check if it's from the selected user
+          if (newMessage.senderId === selectedUser._id) {
+            set({
+              messages: [...state.messages, newMessage],
+              isTyping: false,
+              lastMessageTimestamps: {
+                ...state.lastMessageTimestamps,
+                [selectedUser._id]: new Date(newMessage.createdAt).getTime()
+              } 
+            });
+          }
+        }
+        
+        // Always update timestamps for sorting in sidebar
+        set(state => ({
+          lastMessageTimestamps: {
+            ...state.lastMessageTimestamps,
+            [newMessage.senderId]: new Date(newMessage.createdAt).getTime(),
+            ...(newMessage.groupId ? { [newMessage.groupId]: new Date(newMessage.createdAt).getTime() } : {})
+          }
+        }));
       });
       
       get().subscribeToTyping();
       get().subscribeToGlobalTyping();
-  },
+    },
 
 
     unsubscribeFromMessages: ()=>{
