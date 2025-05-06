@@ -133,6 +133,8 @@ export default function ProfileDashboard() {
                                 src={selectedImg || authUser.profilePic}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
+                                 referrerPolicy="no-referrer"
+                                 crossOrigin="anonymous"
                               />
                             ) : (
                               <span className="flex items-center justify-center font-bold text-6xl border-2 rounded-full w-full h-full bg-gray-500">
@@ -251,6 +253,8 @@ export default function ProfileDashboard() {
                                   src={user.profilePic}
                                   alt={user.fullName}
                                   className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                  crossOrigin="anonymous"
                                 />):
                                 (<span className="absolute inset-0 flex items-center justify-center font-medium">
                                   {user.fullName.charAt(0)}

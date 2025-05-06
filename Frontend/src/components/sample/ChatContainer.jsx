@@ -95,13 +95,13 @@ const ChatContainer = () => {
             // Get profile picture based on if it's a group or direct message
             const profilePic = selectedUser.isGroup
               ? (isCurrentUser 
-                  ? authUser.profilePic || "/avatar.png"
+                  ? authUser.profilePic 
                   : (typeof message.senderId === 'object' 
-                      ? message.senderId.profilePic || "/avatar.png"
+                      ? message.senderId.profilePic 
                       : "/avatar.png"))
               : (isCurrentUser
-                  ? authUser.profilePic || "/avatar.png"
-                  : selectedUser.profilePic || "/avatar.png");
+                  ? authUser.profilePic
+                  : selectedUser.profilePic );
             
             // Get sender name (only shown for group messages)
             const senderName = selectedUser.isGroup && !isCurrentUser
@@ -120,6 +120,8 @@ const ChatContainer = () => {
                     <img
                       src={profilePic}
                       alt="profile pic"
+                      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
                     />
                   </div> 
                 </div>
@@ -135,6 +137,7 @@ const ChatContainer = () => {
                       src={message.image}
                       alt="Attachment"
                       className="sm:max-w-[200px] rounded-md mb-2"
+            
                     />
                   )}
                   {message.text && <p>{message.text}</p>}

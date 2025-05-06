@@ -14,9 +14,12 @@ export const useChatStore = create((set,get)=>({
     isMessagesLoading: false,
     isClearingChat: false,
     isTyping: false,  
+    typingUsers: [],
+    groupTypingUsers: [],
     typingTimeout: null,
     loading: false,
     error: null,
+   
 
 
     getUsers: async() =>{
@@ -217,6 +220,7 @@ resetChat: () => {
       });
       
       get().subscribeToTyping();
+      get().subscribeToGlobalTyping();
   },
 
 
@@ -295,6 +299,62 @@ resetChat: () => {
     }
 },
 
+subscribeToGlobalTyping: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+    
+    // Global typing events for all users (for sidebar)
+    socket.on("userTyping", (data) => {
+      set(state => {
+        // Add typing user to the array if not already there
+        if (!state.typingUsers.includes(data.senderId)) {
+          return { typingUsers: [...state.typingUsers, data.senderId] };
+        }
+        return state;
+      });
+    });
+    
+    socket.on("userStopTyping", (data) => {
+      set(state => ({
+        typingUsers: state.typingUsers.filter(id => id !== data.senderId)
+      }));
+    });
+    
+    // Group typing events (for sidebar)
+    socket.on("userGroupTyping", (data) => {
+        set(state => {
+          // Track both the user who's typing and the group they're typing in
+          const typingKey = `${data.senderId}:${data.groupId}`;
+          
+          if (!state.groupTypingUsers) {
+            state.groupTypingUsers = [];
+          }
+          
+          if (!state.groupTypingUsers.includes(typingKey)) {
+            return { 
+              groupTypingUsers: [...state.groupTypingUsers, typingKey],
+              // Also maintain the regular typingUsers array for backward compatibility
+              typingUsers: [...state.typingUsers, data.senderId]
+            };
+          }
+          return state;
+        });
+      });
+    
+      socket.on("userGroupStopTyping", (data) => {
+        set(state => {
+          const typingKey = `${data.senderId}:${data.groupId}`;
+          
+          return {
+            groupTypingUsers: state.groupTypingUsers ? 
+              state.groupTypingUsers.filter(key => key !== typingKey) : 
+              [],
+            typingUsers: state.typingUsers.filter(id => id !== data.senderId)
+          };
+        });
+      });
+  },
+
 unsubscribeFromTyping: () => {
   const socket = useAuthStore.getState().socket;
   if (!socket) return;
@@ -309,6 +369,18 @@ unsubscribeFromTyping: () => {
   
   set({ isTyping: false, typingTimeout: null });
 }, 
+
+unsubscribeFromGlobalTyping: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+    
+    socket.off("userTyping");
+    socket.off("userStopTyping");
+    socket.off("userGroupTyping");
+    socket.off("userGroupStopTyping");
+    
+    set({ typingUsers: [],groupTypingUsers: [] });
+  },
 
 clearChat: async (userId) => {
   const { selectedUser } = get();

@@ -4,10 +4,11 @@ import SidebarSkeleton from '../Skeletons/SidebarSkeleton';
 import { Search,Users,MessageSquare ,UserPlus } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import CreateGroupModal from './createGroupModal';
+import SidebarTypingIndicator from './TypingSidebar';
 
 const Sidebar = () => {
-    const {getUsers, users, selectedUser, setSelectedUser, isUsersLoading,getGroups, groups } = useChatStore();
-    const {onlineUsers} = useAuthStore();
+    const {getUsers, users, selectedUser, setSelectedUser, isUsersLoading,getGroups, groups,typingUsers,subscribeToGlobalTyping  } = useChatStore();
+    const {onlineUsers,authUser} = useAuthStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [showOnlineOnly,setShowOnlineOnly] = useState(false);
     const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -17,7 +18,9 @@ const Sidebar = () => {
     useEffect(()=>{
         getUsers();
         getGroups();
-    },[getUsers, getGroups])
+
+        subscribeToGlobalTyping();
+    },[getUsers, getGroups, subscribeToGlobalTyping])
 
     const filteredUsers = users
                        //for online only
@@ -28,7 +31,30 @@ const Sidebar = () => {
                       const filteredGroups = groups
                       .filter(group => group.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-
+   const isUserTyping = (userId) => {
+        return typingUsers && typingUsers.includes(userId);
+    };
+    
+    const isGroupTyping = (group) => {
+        if (!typingUsers || !group || !group._id) return false;
+        
+        // Check if we have the groupTypingUsers array available
+        if (useChatStore.getState().groupTypingUsers) {
+            const groupTypingUsers = useChatStore.getState().groupTypingUsers;
+            
+            // Check if any user is typing in this specific group
+            return groupTypingUsers.some(typingKey => {
+                const [_, groupId] = typingKey.split(':');
+                return groupId === group._id;
+            });
+        } 
+    
+        // Fallback to the old method if groupTypingUsers isn't available
+        return group.members && 
+               group.members.some(memberId => 
+                  memberId !== authUser._id && typingUsers.includes(memberId)
+               );
+    };
     if(isUsersLoading) return <SidebarSkeleton />
   
     return (
@@ -113,14 +139,16 @@ const Sidebar = () => {
                                   <div className="relative flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14">
                                       {user.profilePic ? (
                                           <img
-                                              src={user.profilePic || "/avatar.png"}
-                                              alt={user.name}
-                                              className="w-12 h-12 lg:w-16 lg:h-16 rounded-full object-cover"
+                                              src={user.profilePic}
+                                              alt={user.fullName?.charAt(0) || "?"}
+                                              className="w-12 h-12 lg:w-14 lg:h-14 rounded-full object-cover"
+                                               referrerPolicy="no-referrer"
+                                                crossOrigin="anonymous"
                                           />
                                       ) : (
-                                          <span className="flex items-center justify-center font-bold text-2xl border-2 rounded-full w-full h-full bg-gray-500">
-                                              {user.fullName?.charAt(0) || "?"}
-                                          </span>
+                                        <span className="w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center font-semibold text-lg lg:text-xl text-white bg-gray-500 rounded-full border-2 border-gray-400">
+                                        {user.fullName?.charAt(0) || "?"}
+                                      </span>
                                       )}
                                       {onlineUsers.includes(user._id) && (
                                           <span className="absolute bottom-0.5 right-1 lg:right-2 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
@@ -132,7 +160,11 @@ const Sidebar = () => {
                                           {user.fullName}
                                       </div>
                                       <div className="text-xs lg:text-sm text-zinc-400">
-                                          {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+                                          {isUserTyping(user._id) ? (
+                                              <SidebarTypingIndicator />
+                                          ) : (
+                                              onlineUsers.includes(user._id) ? "Online" : "Offline"
+                                          )}
                                       </div>
                                   </div>
                               </button>
@@ -185,7 +217,11 @@ const Sidebar = () => {
                                           {group.name}
                                       </div>
                                       <div className="text-xs lg:text-sm text-zinc-400">
-                                          {group.members?.length || 0} members
+                                          {isGroupTyping(group) ? (
+                                              <SidebarTypingIndicator />
+                                          ) : (
+                                              `${group.members?.length || 0} members`
+                                          )}
                                       </div>
                                   </div>
                               </button>

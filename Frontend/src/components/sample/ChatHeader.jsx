@@ -217,8 +217,10 @@ const ChatHeader = () => {
                   )
                 ) : (
                   <img 
-                    src={selectedUser.profilePic || "/avatar.png"} 
+                    src={selectedUser.profilePic} 
                     alt={displayName}
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
                     onError={(e) => {
                       e.target.onerror = null;
                     }}
@@ -283,12 +285,14 @@ const ChatHeader = () => {
                           <div className="avatar">
                             <div className="size-8 rounded-full">
                               <img 
-                                src={member.profilePic || "/avatar.png"} 
+                                src={member.profilePic} 
                                 alt={member.fullName}
                                 onError={(e) => {
                                   e.target.onerror = null;
                                   e.target.src = "/avatar.png";
                                 }}
+                                referrerPolicy="no-referrer"
+                                crossOrigin="anonymous"
                                 />
                                 </div>
                               </div>
