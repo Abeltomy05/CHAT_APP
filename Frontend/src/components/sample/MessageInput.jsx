@@ -8,6 +8,7 @@ const MessageInput = () => {
     const [text,setText] = useState("");
     const [imagePreview, setImagePreview] = useState(null);
     const [message, setMessage] = useState('');
+    const [isSending, setIsSending] = useState(false);
     const fileInputRef = useRef(null);
 
     const {sendMessage,selectedUser, sendTypingStatus} = useChatStore()
@@ -43,8 +44,10 @@ const MessageInput = () => {
 
     const handleSendMessage = async(e)=>{
         e.preventDefault();
+        if(isSending) return;
         if(!text.trim() && !imagePreview) return;
         try {
+             setIsSending(true);
              await sendMessage({
                 text: text.trim(),
                 image: imagePreview,
@@ -71,6 +74,8 @@ const MessageInput = () => {
           }
           console.error("Failed to send message", error);
         
+        }finally{
+           setIsSending(false);
         }
     }
 
